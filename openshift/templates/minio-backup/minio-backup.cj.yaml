@@ -41,11 +41,6 @@ objects:
               - image: docker-registry.default.svc:5000/esm/esm-documents-backup:${VERSION}
                 imagePullPolicy: Always
                 name: minio-backup
-                command:
-                  - '/bin/bash'
-                  - '-c'
-                  - >-
-                    curl -X POST -H "Content-Type: application/json" --data "{\"username\":\"BakBot\",\"icon_emoji\":\":robot:\",\"text\":\"Minio Test\"}" https://chat.pathfinder.gov.bc.ca/hooks/BTqW65kZWWrs3TnDt/Yz9QocenFmpuWyqr3Xapgo9c3X4wm8RBfdnizej7gqeBqfN3;
                 env:
                   - name: RESTIC_PASSWORD
                     valueFrom:

@@ -50,7 +50,7 @@ objects:
         git:
           uri: https://github.com/MaxWardle/esm-server.git
           ref: EM-325
-        contextDir: openshift/templates
+        contextDir: openshift/templates/minio-backup
         dockerfile: |
           FROM alpine:latest
           USER root
