@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: minio-backup
+parameters:
+  - name: NAME_SUFFIX
+    required: true
+  - name: NAMESPACE
+    required: true
+  - name: DEST_PVC
+    required: true
+  - name: VERSION
+    value: v1.0.0
+  - name: SCHEDULE
+    value: "* * * * *"
+    required: false
+  - name: SOURCE_PVC
+    required: true
+objects:
+  - apiVersion: batch/v1beta1
+    kind: CronJob
+    metadata:
+      name: esm-documents-${NAME_SUFFIX}-backup
+      namespace: "${NAMESPACE}"
+    spec:
+      concurrencyPolicy: Forbid
+      failedJobsHistoryLimit: 3
+      jobTemplate:
+        metadata:
+          labels:
+            app: "esm-${NAME_SUFFIX}"
+            name: "esm-${NAME_SUFFIX}-documents-backup"
+            component: backups
+            part-of: esm
+        spec:
+          backoffLimit: 10
+          template:
+            spec:
+              activeDeadlineSeconds: 3600
+              containers:
+              - image: docker-registry.default.svc:5000/esm/esm-documents-backup:${VERSION}
+                imagePullPolicy: Always
+                name: minio-backup
+                command:
+                  - '/bin/bash'
+                  - '-c'
+                  - >-
+                    curl -X POST -H "Content-Type: application/json" --data "{\"username\":\"BakBot\",\"icon_emoji\":\":robot:\",\"text\":\"Minio Test\"}" https://chat.pathfinder.gov.bc.ca/hooks/BTqW65kZWWrs3TnDt/Yz9QocenFmpuWyqr3Xapgo9c3X4wm8RBfdnizej7gqeBqfN3;
+                env:
+                  - name: RESTIC_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        key: RESTIC_PASSWORD
+                        name: minio-restic-password
+                volumeMounts:
+                - mountPath: /mnt/dest/
+                  name: dest
+                - mountPath: /mnt/source/
+                  name: source
+                  readOnly: true
+
+              restartPolicy: OnFailure
+              terminationGracePeriodSeconds: 30
+              volumes:
+              - name: source
+                persistentVolumeClaim:
+                  claimName: "${SOURCE_PVC}"
+              - name: dest
+                persistentVolumeClaim:
+                  claimName: "${DEST_PVC}"
+      schedule: ${SCHEDULE}
+      successfulJobsHistoryLimit: 3
